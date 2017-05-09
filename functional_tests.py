@@ -1,30 +1,41 @@
 from selenium import webdriver
+import unittest
 
-browser = webdriver.Firefox()
+class NewVisitorTest(unittest.TestCase):
 
-# Henk decides to visit this awesome thing he heard about
-browser.get('http://localhost:8000')
+  def setUp(self):
+    self.browser = webdriver.Firefox()
 
-# He sees the page title mention to-do lists
-assert 'To-Do' in browser.title
+  def tearDown(self):
+    self.browser.quit()
 
-# Toroughly amazed, he immediately want to enter a to-do item
+  def test_can_start_a_list_and_get_it_later(self):
+    # Henk decides to visit this awesome thing he heard about
+    self.browser.get('http://localhost:8000')
 
-# He types 'choke the chicken' into a text box
+    # He sees the page title mention to-do lists
+    self.assertIn('To-Do', self.browser.title)
+    self.fail('Finish the test!')
 
-# When he hits enter, the page updates and now lists
-# 'choke the chicken' as an item in a to-do list
+    # Toroughly amazed, he immediately want to enter a to-do item
 
-# Not satisfied, he enters 'wrestle the snake'
+    # He types 'choke the chicken' into a text box
 
-# Lo and behold, the page now lists both items!
+    # When he hits enter, the page updates and now lists
+    # 'choke the chicken' as an item in a to-do list
 
-# Existential questions arise: will this list last?
-# Pondering this Henk notices the url; it's unique
-# Magically some text appeared, informing Henk the url is the key to persistance
+    # Not satisfied, he enters 'wrestle the snake'
 
-# Skeptically he visits this url in pron mode - aha! All is well
+    # Lo and behold, the page now lists both items!
 
-# Satisfied, he goes back to sleep
+    # Existential questions arise: will this list last?
+    # Pondering this Henk notices the url; it's unique
+    # Magically some text appeared, informing Henk the url is the key to persistance
 
-browser.quit()
+    # Skeptically he visits this url in pron mode - aha! All is well
+
+    # Satisfied, he goes back to sleep
+
+if __name__ == '__main__':  
+    # unittest.main(warnings='ignore') 
+    unittest.main() 
