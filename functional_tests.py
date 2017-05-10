@@ -11,6 +11,11 @@ class NewVisitorTest(unittest.TestCase):
   def tearDown(self):
     self.browser.quit()
 
+  def check_for_row_in_list_table(self, row_text):
+    table = self.browser.find_element_by_id('id_list_table')
+    rows = table.find_elements_by_tag_name('tr')
+    self.assertIn(row_text, [row.text for row in rows])
+
   def test_can_start_a_list_and_get_it_later(self):
     # Henk decides to visit this awesome thing he heard about
     self.browser.get('http://localhost:8000')
@@ -34,10 +39,7 @@ class NewVisitorTest(unittest.TestCase):
     # 'choke the chicken' as an item in a to-do list
     inputbox.send_keys(Keys.ENTER)
     time.sleep(1)
-
-    table = self.browser.find_element_by_id('id_list_table')
-    rows = table.find_elements_by_tag_name('tr')
-    self.assertIn('1: choke the chicken', [row.text for row in rows])
+    self.check_for_row_in_list_table('1: choke the chicken')
 
     # Not satisfied, he enters 'wrestle the snake'
     inputbox = self.browser.find_element_by_id('id_new_item')
@@ -46,13 +48,8 @@ class NewVisitorTest(unittest.TestCase):
     time.sleep(1)
 
     # Lo and behold, the page now lists both items!
-    table = self.browser.find_element_by_id('id_list_table')
-    rows = table.find_elements_by_tag_name('tr')
-    self.assertIn('1: choke the chicken', [row.text for row in rows])
-    self.assertIn(
-      '2: wrestle the snake', 
-      [row.text for row in rows]
-    )
+    self.check_for_row_in_list_table('1: choke the chicken')
+    self.check_for_row_in_list_table('2: wrestle the snake')
 
     # Existential questions arise: will this list last?
     # Pondering this Henk notices the url; it's unique
