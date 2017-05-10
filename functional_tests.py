@@ -37,19 +37,27 @@ class NewVisitorTest(unittest.TestCase):
 
     table = self.browser.find_element_by_id('id_list_table')
     rows = table.find_elements_by_tag_name('tr')
-    self.assertTrue(
-      any(row.text == '1: choke the chicken' for row in rows),
-      "New to-do item did not appear in table"
-    )
+    self.assertIn('1: choke the chicken', [row.text for row in rows])
 
     # Not satisfied, he enters 'wrestle the snake'
-    self.fail('Finish the test!')
+    inputbox = self.browser.find_element_by_id('id_new_item')
+    inputbox.send_keys('wrestle the snake')
+    inputbox.send_keys(Keys.ENTER)
+    time.sleep(1)
 
     # Lo and behold, the page now lists both items!
+    table = self.browser.find_element_by_id('id_list_table')
+    rows = table.find_elements_by_tag_name('tr')
+    self.assertIn('1: choke the chicken', [row.text for row in rows])
+    self.assertIn(
+      '2: wrestle the snake', 
+      [row.text for row in rows]
+    )
 
     # Existential questions arise: will this list last?
     # Pondering this Henk notices the url; it's unique
     # Magically some text appeared, informing Henk the url is the key to persistance
+    self.fail('Finish the test!')
 
     # Skeptically he visits this url in pron mode - aha! All is well
 
