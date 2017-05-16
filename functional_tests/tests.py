@@ -1,23 +1,33 @@
 from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import WebDriverException
 import time
 
+MAX_WAIT = 5
 
 class NewVisitorTest(LiveServerTestCase):
 
   def setUp(self):
-    self.browser = webdriver.Firefox()
+    self.browser = webdriver.Chrome()
 
   def tearDown(self):
     self.browser.quit()
 
-  def check_for_row_in_list_table(self, row_text):
-    table = self.browser.find_element_by_id('id_list_table')
-    rows = table.find_elements_by_tag_name('tr')
-    self.assertIn(row_text, [row.text for row in rows])
+  def wait_for_row_in_list_table(self, row_text):
+    start_time = time.time()
+    while True:
+      try:
+        table = self.browser.find_element_by_id('id_list_table')
+        rows = table.find_elements_by_tag_name('tr')
+        self.assertIn(row_text, [row.text for row in rows])
+        return
+      except (AssertionError, WebDriverException) as e:
+        if time.time() - start_time > MAX_WAIT:
+          raise e
+        time.sleep(0.1)
 
-  def test_can_start_a_list_and_get_it_later(self):
+  def test_can_start_a_list_for_one_user(self):
     # Henk decides to visit this awesome thing he heard about
     self.browser.get(self.live_server_url)
 
@@ -27,6 +37,7 @@ class NewVisitorTest(LiveServerTestCase):
     self.assertIn('To-Do', header_text)
 
     # Toroughly amazed, he immediately want to enter a to-do item
+    self.browser.get(self.live_server_url)
     inputbox = self.browser.find_element_by_id('id_new_item')
     self.assertEqual(
       inputbox.get_attribute('placeholder'),
@@ -39,24 +50,62 @@ class NewVisitorTest(LiveServerTestCase):
     # When he hits enter, the page updates and now lists
     # 'choke the chicken' as an item in a to-do list
     inputbox.send_keys(Keys.ENTER)
-    time.sleep(1)
-    self.check_for_row_in_list_table('1: choke the chicken')
+    self.wait_for_row_in_list_table('1: choke the chicken')
 
     # Not satisfied, he enters 'wrestle the snake'
     inputbox = self.browser.find_element_by_id('id_new_item')
     inputbox.send_keys('wrestle the snake')
     inputbox.send_keys(Keys.ENTER)
-    time.sleep(1)
 
     # Lo and behold, the page now lists both items!
-    self.check_for_row_in_list_table('1: choke the chicken')
-    self.check_for_row_in_list_table('2: wrestle the snake')
+    self.wait_for_row_in_list_table('1: choke the chicken')
+    self.wait_for_row_in_list_table('2: wrestle the snake')
 
+    # Satisfied, he goes back to sleep
+
+
+  def test_multiple_users_can_start_lists_at_different_urls(self):
+    # Henk decides to create a new todo list
+    self.browser.get(self.live_server_url)
+    inputbox = self.browser.find_element_by_id('id_new_item')
+    inputbox.send_keys('choke the chicken')
+    inputbox.send_keys(Keys.ENTER)
+    self.wait_for_row_in_list_table('1: choke the chicken')
+    
     # Existential questions arise: will this list last?
     # Pondering this Henk notices the url; it's unique
     # Magically some text appeared, informing Henk the url is the key to persistance
-    self.fail('Finish the test!')
+    henk_list_url = self.browser.current_url
+    self.assertRegex(henk_list_url, '/lists/.+')
 
-    # Skeptically he visits this url in pron mode - aha! All is well
+    # Shiver me timbers! A new user appears!
+
+    ## To accurately simulate this, we restart the browser
+    self.browser.quit()
+    self.browser = webdriver.Chrome()
+
+    # Sjaak visits /. There is no list to be found
+    self.browser.get(self.live_server_url)
+    page_text = self.browser.find_element_by_tag_name('body').text
+    self.assertNotIn('choke the chicken', page_text)
+    self.assertNotIn('make a fly', page_text)
+ 
+    # Sjaak creates a list for himself - he is a bit less direct than Henk
+    inputbox = self.browser.find_element_by_id('id_new_item')
+    inputbox.send_keys('water the plants')
+    inputbox.send_keys(Keys.ENTER)
+    self.wait_for_row_in_list_table('1: water the plants')
+ 
+    # The system is feeling generous and also gives Sjaak a unique url
+    sjaak_list_url = self.browser.current_url
+    self.assertRegex(sjaak_list_url, '/lists/.+')
+    self.assertNotEqual(sjaak_list_url, henk_list_url)
+
+    # There still is no trace of Henk's list
+    page_text = self.browser.find_element_by_tag_name('body').text
+    self.assertNotIn('choke the chicken', page_text)
+    self.assertIn('water the plants', page_text)
 
     # Satisfied, he goes back to sleep
+
+    self.fail('Finish the test!')
