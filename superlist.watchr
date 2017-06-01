@@ -1,3 +1,3 @@
 watch( '.*\.py' ) do
-  system 'python manage.py test'
+  system 'python manage.py test lists'
 end
