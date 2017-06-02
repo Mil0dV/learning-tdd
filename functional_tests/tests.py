@@ -107,5 +107,3 @@ class NewVisitorTest(LiveServerTestCase):
     self.assertIn('water the plants', page_text)
 
     # Satisfied, he goes back to sleep
-
-    self.fail('Finish the test!')
